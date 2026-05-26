@@ -1,0 +1,25 @@
+# Root .gitignore for the project
+
+# Python
+backend/venv/
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Node / frontend
+node_modules/
+dist/
+frontend/dist/
+frontend/node_modules/
+
+# Environment
+.env
+
+# Editor / OS
+.vscode/
+.DS_Store
+.idea/
+
+# Logs
+logs/
+*.log

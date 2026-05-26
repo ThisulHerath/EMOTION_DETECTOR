@@ -1,0 +1,3 @@
+* text=auto
+frontend/package-lock.json text eol=lf
+# Ensure POSIX-style EOL for JSON lockfiles to avoid LF/CRLF churn on Windows
