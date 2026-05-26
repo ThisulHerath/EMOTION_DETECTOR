@@ -1,54 +1,66 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from deepface import DeepFace
+from fer import FER
 import numpy as np
 import cv2
 import io
-from PLI import Image
+from PIL import Image
 
 app = FastAPI()
 
-app.add.middleware(
+app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Adjust this to your frontend URL
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
-    allow_headers=["*"],
     allow_methods=["*"],
+    allow_headers=["*"],
 )
+
+# Initialize FER detector
+detector = FER(mtcnn=False)
 
 @app.get("/")
 def root():
-    return {"message" : "Emotion Detection API is running"}
+    return {"message": "Emotion Detection API is running"}
 
 @app.post("/analyze")
 async def analyze_emotion(file: UploadFile = File(...)):
-    try :
-        #read image from frontend
+    try:
+        # Read image sent from frontend
         contents = await file.read()
         image = Image.open(io.BytesIO(contents)).convert("RGB")
         frame = np.array(image)
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
-        #analyze emption using DeepFace
-        result = DeepFace.analyze(
-            frame,
-            actions=["emotion"],
-            enforce_detection = False
-        )
+        # Detect emotions using FER
+        result = detector.detect_emotions(frame)
 
-        #extract emotion data
-        emotions = result[0]["emotion"]
-        dominant = result[0]["dominant_emotion"]
+        if not result:
+            return {
+                "dominant_emotion": "No face detected",
+                "emotions": {},
+                "status": "no_face"
+            }
 
-        return{
-            "dominant_emotion" : dominant,
-            "emotions" : emotions,
-            "status" : "success"
+        # Get first face detected
+        emotions = result[0]["emotions"]
+
+        # Find dominant emotion
+        dominant = max(emotions, key=emotions.get)
+
+        # Convert to percentages
+        emotions_percent = {k: round(v * 100, 2) for k, v in emotions.items()}
+
+        return {
+            "dominant_emotion": dominant,
+            "emotions": emotions_percent,
+            "status": "success"
         }
+
     except Exception as e:
-        return{
-            "dominant_emotion" : "unknown",
-            "emotions" : {},
-            "status" : "error",
-            "message" : str(e)
+        return {
+            "dominant_emotion": "error",
+            "emotions": {},
+            "status": "error",
+            "message": str(e)
         }
