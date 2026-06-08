@@ -75,7 +75,11 @@ export default function App() {
       const formData = new FormData();
       formData.append("file", blob, "frame.jpg");
       try {
-        const res = await fetch("http://127.0.0.1:8000/analyze", {
+        // Use same hostname as frontend (works for localhost and network IPs)
+        const backendHost = window.location.hostname;
+        const backendPort = "8000";
+        const backendUrl = `http://${backendHost}:${backendPort}/analyze`;
+        const res = await fetch(backendUrl, {
           method: "POST", body: formData,
         });
         const data = await res.json();
